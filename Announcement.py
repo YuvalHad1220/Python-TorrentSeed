@@ -55,6 +55,7 @@ def announce(TYPE: str, torrent: Torrent, client: Client):
 
 def main_loop(TorrentList: List[Torrent], ClientList: List[Client]):
     while True:
+        # first part - here we will run all the torrents, announce if need, and then download\upload according to current limitations
         for torrent in TorrentList:
             client = ClientList[torrent.client_id]
             # first we will announce start, if needed. then it will also fix the issue of time_to_announce equals zero right when adding torrent from user
@@ -71,16 +72,27 @@ def main_loop(TorrentList: List[Torrent], ClientList: List[Client]):
                 continue
 
             toDownload = download_data(torrent, client)
+            torrent.temp_taken_download = toDownload
+            client.available_download -= toDownload
             torrent.downloaded += toDownload
-            client.available_download += toDownload
 
             toUpload = upload_data(torrent, client)
+            torrent.temp_taken_upload = toUpload
+            client.available_upload -= toUpload
             torrent.uploaded += toUpload
-            client.available_upload += toUpload
 
-            torrent.time_to_announce -= 1
             print(client)
             print(torrent)
             print("-------")
+
+        # second part of loop - here we will return the taken bandiwdth and also make the torrent closer to announce
+        for torrent in TorrentList:
+            client.available_upload += torrent.temp_taken_upload
+            torrent.temp_taken_upload = 0
+            client.available_download += torrent.temp_taken_download
+            torrent.temp_taken_download = 0
+
+            torrent.time_to_announce -= 1
+
 
         time.sleep(1)

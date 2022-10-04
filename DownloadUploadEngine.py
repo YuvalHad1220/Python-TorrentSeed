@@ -49,9 +49,6 @@ def download_data(torrent: Torrent, client: Client) -> int:
     if chosen_speed + torrent.downloaded >= torrent.size:
         chosen_speed = torrent.size - torrent.downloaded
 
-    # WE MUST NOT FORGET to add back the chosed speed to client once we finish
-    client.available_download -= chosen_speed
-
     return chosen_speed
 
 # same principials as before.
@@ -82,8 +79,6 @@ def upload_data(torrent: Torrent, client: Client) -> int:
     bandwidth_to_use = min(available_bandwidth, max_upload_speed)
 
     chosen_speed = random_speed(bandwidth_to_use)
-
-    client.available_upload -= chosen_speed
 
     return chosen_speed
 
