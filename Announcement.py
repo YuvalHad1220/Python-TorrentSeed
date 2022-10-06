@@ -41,10 +41,7 @@ def announce(TYPE: str, torrent: Torrent, client: Client):
         HTTP_PARAMS["event"] = event[TYPE]
 
     req = requests.get(torrent.announce_url, params=HTTP_PARAMS, headers=HTTP_HEADERS)
-    print(HTTP_PARAMS)
-
     info = bencoding.decode(req.content)
-    print(info)
     torrent.time_to_announce = info[b"interval"]
     torrent.seeders = int(info[b"complete"])
     torrent.leechers = int(info[b"incomplete"])
@@ -81,12 +78,11 @@ def main_loop(TorrentList: List[Torrent], ClientList: List[Client]):
             client.available_upload -= toUpload
             torrent.uploaded += toUpload
 
+        # second part of loop - here we will return the taken bandiwdth and also make the torrent closer to announce
+        for torrent in TorrentList:
             print(client)
             print(torrent)
             print("-------")
-
-        # second part of loop - here we will return the taken bandiwdth and also make the torrent closer to announce
-        for torrent in TorrentList:
             client.available_upload += torrent.temp_taken_upload
             torrent.temp_taken_upload = 0
             client.available_download += torrent.temp_taken_download
