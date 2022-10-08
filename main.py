@@ -1,5 +1,8 @@
+import asyncio
+import os
 import sqlite3
 
+import Database
 from Client import create_from_user_input as cli_create, random_id
 from Torrent import create_from_user_input as tor_create
 from Announcement import main_loop
@@ -35,126 +38,47 @@ Clients = [{"Name": "qBittorrent 4.3.1",
             "User-Agent": "uTorrent/2210(25110)"
             }]
 
-download_speed = 3200
-upload_speed = 50
 
-torrent1 = parse("Shower & locker room big compilation pack.torrent")
-torrent1 = tor_create(torrent1["torrent_name"], torrent1["torrent_size"], download_speed, upload_speed, torrent1["announce_url"], torrent1["file_hash"], 0, 0, 0)
-print(torrent1.size)
-# print(torrent1, torrent2, torrent3)
+def parse_size(amount, type):
+    match type:
+        case 'b':
+            return amount
 
-client = cli_create(rand_id=random_id(), client_name="my first client", user_agent=Clients[0]["User-Agent"], port=25565, upload_limit=100, download_limit=10000, peer_id=Clients[0]["peerID"])
+        case 'kb':
+            return amount * (10 ** 3)
 
-# print(client)
-
-ClientList = [client]
-TorrentList = [torrent1]
-
-#main_loop(TorrentList, ClientList)
-from dataclasses import dataclass, fields
-import builtins
-class dctdb:
-
-    def __init__(self, dc: dataclass, conn):
-        self.dc = dc
-        self.conn = conn
-        self.create_table()
-
-    def create_table(self):
-        CREATE_COMMAND = "CREATE TABLE IF NOT EXISTS "
-
-        _create_command = self.dc.__name__ + '(id integer PRIMARY KEY AUTOINCREMENT, '
-
-        for field in fields(self.dc):
-            match field.type:
-                case builtins.int:
-                    _create_command += field.name + " integer, "
-
-                case builtins.str:
-                    _create_command += field.name + " text, "
-
-                case builtins.bool:
-                    _create_command += field.name + " boolean, "
-
-                case builtins.bytes:
-                    _create_command += field.name + " binary, "
-
-                case _:
-                    print(field.type)
-                    exit(-1)
-
-        _create_command = _create_command[:-2]
-
-        CREATE_COMMAND += _create_command + ");"
-
-        c = self.conn.cursor()
-        c.execute(CREATE_COMMAND)
-        return True
-
-    def add_to_table(self, instance_of_dc):
-        INSERT_COMMAND = "INSERT INTO " + self.dc.__name__ + "("
-
-        _insert_command = ','.join(field.name for field in fields(self.dc))
-
-        INSERT_COMMAND += _insert_command + ") VALUES (" + ("?,"*len(fields(instance_of_dc)))[:-1] + ")"
-
-        c = self.conn.cursor()
-        tup = tuple(getattr(instance_of_dc, field.name) for field in fields(instance_of_dc))
-        c.execute(INSERT_COMMAND, tup)
-        self.conn.commit()
-        return True
-
-    def fetch_all_from_table(self):
-        cur = self.conn.cursor()
-        cur.execute("SELECT * FROM " + self.dc.__name__)
-
-        rows = cur.fetchall()
-        for row in rows:
-            for item in row:
-                print(type(item))
-        return [self.dc(*row[1:]) for row in rows]
-
-    def update(self, instance_of_dc, find_by_field_name):
-        UPDATE_COMMAND = "UPDATE " +self.dc.__name__ + " SET "
-        _update_command = ''.join(f"{field.name} = ?, " for field in fields(self.dc))[:-2]
-        UPDATE_COMMAND += _update_command + f" WHERE {find_by_field_name} = ?"
-        c = self.conn.cursor()
-        tup = tuple(getattr(instance_of_dc, field.name) for field in fields(instance_of_dc)) + (getattr(instance_of_dc, find_by_field_name),)
-
-        c.execute(UPDATE_COMMAND, tup)
-        self.conn.commit()
+        case 'mb':
+            return amount * (10 ** 6)
 
 
-    def delete(self, instance_of_dc):
-        DELETE_COMMAND = "DELETE FROM " +self.dc.__name__ +" WHERE "
-        _delete_command = ''.join(f"{field.name} = ? AND " for field in fields(self.dc))[:-5]
+def add_torrents_from_folder():
+    download_speed = parse_size(560, 'kb')
+    upload_speed = parse_size(50, 'b')
 
-        DELETE_COMMAND += _delete_command + ";"
-        print(DELETE_COMMAND)
+    fresh_torrent_list = []
+    for torrent in os.listdir("torrents"):
+        torr = parse(f"torrents/{torrent}")
 
-        c = self.conn.cursor()
-        tup = tuple(getattr(instance_of_dc, field.name) for field in fields(instance_of_dc))
+        new_tor = tor_create(torr['torrent_name'], torr['torrent_size'], download_speed, upload_speed,
+                             torr['announce_url'], torr['file_hash'], 0, 0, 0)
 
-        c.execute(DELETE_COMMAND, tup)
-        self.conn.commit()
+        fresh_torrent_list.append(new_tor)
+
+        os.remove(f"torrents/{torrent}")
+
+    return fresh_torrent_list
 
 
-def create_connection(db_file):
-    return sqlite3.connect(db_file)
-uri = "db.db"
-conn = create_connection(uri)
-import Client
+db_instance = Database.Database("torrents_and_clients.db")
+fresh_torrents = add_torrents_from_folder()
+if fresh_torrents:
+    db_instance.add_torrents(fresh_torrents)
+torrent_list = db_instance.return_torrent_list()
+client_list = db_instance.return_client_list()
 
-client_db = dctdb(Client.Client, conn)
-import Torrent
+if len(client_list) == 0:
+    new_cl = cli_create(random_id(), "only client for now", Clients[0]['User-Agent'], 25565, parse_size(300, 'kb'), parse_size(100, 'mb'),  Clients[0]['peerID'])
+    db_instance.add_client(new_cl)
+    client_list.append(new_cl)
 
-client_db = dctdb(Client.Client, conn)
-torrent_db = dctdb(Torrent.Torrent, conn)
-
-torrent_db.create_table()
-client_db.create_table()
-
-torrent_db.add_to_table(torrent1)
-client_db.add_to_table(client)
-
-torrent_db.fetch_all_from_table()
+asyncio.run(main_loop(torrent_list, client_list, db_instance))

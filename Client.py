@@ -21,11 +21,6 @@ class Client:
     available_download: int  # How much upload bandwidth is available in Bytes
     peer_id: str  # A peer ID which is originated in the ORIGINAL torrent client. example for one: -AZ3020-
 
-
-def create_from_db(db_payload) -> Client:
-    pass
-
-
 def create_from_user_input(rand_id, client_name, user_agent, port, upload_limit, download_limit, peer_id) -> Client:
     available_upload = upload_limit
     available_download = download_limit

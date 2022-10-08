@@ -2,6 +2,7 @@
 
 import string
 
+
 def sizeof_fmt(num, suffix='B'):
     for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if abs(num) < 1024.0:
@@ -48,43 +49,45 @@ def _decode(raw_buffer, elements, index=0):
         index += 1
         pos = index + raw_buffer[index:].find(ord('e'))
         number = int(raw_buffer[index:pos])
-        index = pos+1
+        index = pos + 1
         elements.append(number)
     else:
         pos = index + raw_buffer[index:].find(ord(':'))
         size = int(raw_buffer[index:pos])
-        index = pos+1
-        data = raw_buffer[index:index+size]
+        index = pos + 1
+        data = raw_buffer[index:index + size]
         index += size
         elements.append(data)
     return index
 
+
 def decode(raw_buffer):
-  """Decode a bytes string into its corresponding data via Bencoding."""
-  elements = []
-  _decode(raw_buffer, elements)
-  return elements[0]
+    """Decode a bytes string into its corresponding data via Bencoding."""
+    elements = []
+    _decode(raw_buffer, elements)
+    return elements[0]
+
 
 def encode(data):
-  """Encode data into a bytes string via Bencoding."""
-  if isinstance(data, bytes):
-    return str(len(data)).encode("ascii") + b':' + data
-  elif isinstance(data, str):
-    return encode(data.encode("ascii"))
-  elif isinstance(data, int):
-    return  b'i' + str(data).encode("ascii") + b'e'
-  elif isinstance(data, list):
-    result = b'l'
-    for d in data:
-      result += encode(d)
-    result += b'e'
-    return result
-  elif isinstance(data, dict):
-    result = b'd'
-    for key, value in data.items():
-      result += encode(key)
-      result += encode(value)
-    result += b'e'
-    return result
+    """Encode data into a bytes string via Bencoding."""
+    if isinstance(data, bytes):
+        return str(len(data)).encode("ascii") + b':' + data
+    elif isinstance(data, str):
+        return encode(data.encode("ascii"))
+    elif isinstance(data, int):
+        return b'i' + str(data).encode("ascii") + b'e'
+    elif isinstance(data, list):
+        result = b'l'
+        for d in data:
+            result += encode(d)
+        result += b'e'
+        return result
+    elif isinstance(data, dict):
+        result = b'd'
+        for key, value in data.items():
+            result += encode(key)
+            result += encode(value)
+        result += b'e'
+        return result
 
-  raise ValueError("Unexpected bencode_encode() data")
+    raise ValueError("Unexpected bencode_encode() data")

@@ -15,14 +15,42 @@ Also - the logic here is that the torrent's main loop JUST WHEN the database is 
 
 """
 
-# decided to use sqlite3 because we use really simple db operations. any ORM will just add overhead that really is not necessary
-import sqlite3
+from typing import List
+from dctodb import dctodb
+from Client import Client
+from Torrent import Torrent
+
 
 class Database:
-    def __init__(self):
+    def __init__(self, db_filename):
         # If the database is busy doing any data sensitive operations, we WILL NOT RUN ANY UPDATES ON THE TORRENTLIST.
-        self.isBusy = False
+        self.clientConn = dctodb(Client, db_filename)
+        self.torrentConn = dctodb(Torrent, db_filename)
+
+    def return_client_list(self) -> List[Client]:
+        return self.clientConn.fetch_all()
+
+    def return_torrent_list(self) -> List[Client]:
+        return self.torrentConn.fetch_all()
+
+    def update_client(self, client):
+        self.clientConn.update("rand_id", client)
 
 
+    def update_torrent(self, torrent):
+        self.torrentConn.update("info_hash", torrent)
 
-        pass
+
+    def update_torrents(self, torrents):
+        self.torrentConn.update("info_hash", *torrents)
+
+    def add_torrent(self, torrent):
+        self.torrentConn.insert(torrent)
+
+
+    def add_torrents(self, torrents):
+        self.torrentConn.insert(*torrents)
+
+
+    def add_client(self, client):
+        self.clientConn.insert(client)
