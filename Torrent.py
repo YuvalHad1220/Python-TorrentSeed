@@ -27,9 +27,11 @@ class Torrent:
     temp_taken_download: int  # Temp var to hold how much download bandwidth we took from client to the current second
     temp_taken_upload: int  # Temp var to hold how much upload bandwidth we took from client to the current second
 
-    def progress(self) -> int:
+    def progress(self) -> float:
         return 100 * (self.downloaded / self.size)
 
+    def ratio(self) -> float:
+        return self.uploaded / (self.downloaded + 1)
 def create_from_user_input(torrent_name, torrent_size, download_speed, upload_speed, announce_url, info_hash, client_id,
                            downloaded, uploaded) -> Torrent:
     # when we first add the torrent, we dont know if we can upload \ download. Therefore we will add the torrent with

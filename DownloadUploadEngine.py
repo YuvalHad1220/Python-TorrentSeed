@@ -58,14 +58,22 @@ def upload_data(torrent: Torrent, client: Client) -> int:
     if torrent.progress() != 100 and torrent.leechers == 1:
         return 0
 
+    if torrent.ratio() > 3:
+        return 0
+
     # if we dont have a lot of leechers
     if torrent.leechers <= 2:
+        return 0
+
+    # we cant upload data we dont have
+    if torrent.progress() == 0:
         return 0
 
     available_bandwidth = client.available_upload
     # if no bandwidth is left. in the future we will try to fix it
     if available_bandwidth == 0:
         return 0
+
 
 
     max_upload_speed = torrent.upload_speed

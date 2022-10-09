@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Client List</title>
+    <link href='https://fonts.googleapis.com/css?family=Varela Round' rel='stylesheet'>
+</head>
+<style>
+body {
+    text-align: center;
+    font-family: 'Varela Round';
+    background-color:#222;
+    color: #fff;
+    font-size: 14px;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 20px;
+}
+
+#headers_row {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.bottom_nav {
+    font-weight: bold;
+    position: fixed;
+    bottom: 0;
+    overflow: hidden;
+    width: 100%;
+    background-color:#222;
+    padding: 8px;
+
+}
+
+.bottom_nav a{
+    font-size: 16px;
+    margin-left: 30px;
+}
+
+</style>
+<body>
+<table>
+    <tr id="headers_row">
+        <td><a>Client Name</a></td>
+        <td><a>Download Speed</a></td>
+        <td><a>Total Downloaded</a></td>
+        <td><a>Upload Speed</a></td>
+        <td><a>Total Uploaded</a></td>
+        <td><a>Ratio</a></td>
+    </tr>
+
+    {% for client in client_list %}
+    <tr id="torrent_row">
+        <td><a href="{{url_for('edit_client', client_name=client.client_name)}}">{{client.client_name}}</a></td>
+        <td><a>{{client.download_limit - client.available_download}}</a></td>
+        <td><a>{{client.total_downloaded}}</a></td>
+        <td><a>{{client.upload_limit - client.available_upload}}</a></td>
+        <td><a>{{client.total_uploaded}}</a></td>
+        <td><a>{{"%.2f" % (client.total_uploaded / (client.total_downloaded + 1))}}</a></td>
+    </tr>
+    {% endfor %}
+
+</table>
+</body>
+</html>

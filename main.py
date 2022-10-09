@@ -1,8 +1,10 @@
 import asyncio
 import os
 import sqlite3
+import threading
 
 import Database
+import Website
 from Client import create_from_user_input as cli_create, random_id
 from Torrent import create_from_user_input as tor_create
 from Announcement import main_loop
@@ -52,8 +54,8 @@ def parse_size(amount, type):
 
 
 def add_torrents_from_folder():
-    download_speed = parse_size(560, 'kb')
-    upload_speed = parse_size(50, 'b')
+    download_speed = parse_size(2, 'mb')
+    upload_speed = parse_size(50, 'kb')
 
     fresh_torrent_list = []
     for torrent in os.listdir("torrents"):
@@ -77,8 +79,17 @@ torrent_list = db_instance.return_torrent_list()
 client_list = db_instance.return_client_list()
 
 if len(client_list) == 0:
-    new_cl = cli_create(random_id(), "only client for now", Clients[0]['User-Agent'], 25565, parse_size(300, 'kb'), parse_size(100, 'mb'),  Clients[0]['peerID'])
+    new_cl = cli_create(random_id(), "only client for now", Clients[0]['User-Agent'], 25565, parse_size(300, 'kb'),
+                        parse_size(20, 'mb'), Clients[0]['peerID'])
     db_instance.add_client(new_cl)
     client_list.append(new_cl)
 
-asyncio.run(main_loop(torrent_list, client_list, db_instance))
+
+def main(torrent_list, client_list, db_instance):
+    asyncio.run(main_loop(torrent_list, client_list, db_instance))
+
+
+threading.Thread(target=main, args=(torrent_list, client_list, db_instance)).start()
+Website.main(torrent_list, client_list)
+
+# main(torrent_list, client_list, db_instance)

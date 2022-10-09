@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TorrentSeedMageFork Homepage!</title>
+    <link href='https://fonts.googleapis.com/css?family=Varela Round' rel='stylesheet'>
+</head>
+<style>
+body {
+    text-align: center;
+    font-family: 'Varela Round';
+    background-color:#222;
+    color: #fff;
+    font-size: 14px;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 20px;
+}
+
+#headers_row {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.bottom_nav {
+    font-weight: bold;
+    position: fixed;
+    bottom: 0;
+    overflow: hidden;
+    width: 100%;
+    background-color:#222;
+    padding: 8px;
+
+}
+
+.bottom_nav a{
+    font-size: 16px;
+    margin-left: 30px;
+}
+
+</style>
+<body>
+<table>
+    <tr id="headers_row">
+        <td><a>Torrent Name</a></td>
+        <td><a>Client</a></td>
+        <td><a>Progress</a></td>
+        <td><a>Size</a></td>
+        <td><a>Downloaded</a></td>
+        <td><a>DL Speed</a></td>
+        <td><a>Uploaded</a></td>
+        <td><a>UL Speed</a></td>
+        <td><a>Ratio</a></td>
+        <td><a>Seeders</a></td>
+        <td><a>Leechers</a></td>
+    </tr>
+    {% for torrent in torrent_list %}
+    <tr id="torrent_row">
+        <td><a>{{torrent.name}}</a></td>
+        <td><a>{{client_list[torrent.client_id].client_name}}</a></td>
+        <td><a>{{"%.2f" % (100 * (torrent.downloaded+1) / torrent.size)}}</a></td>
+        <td><a>{{torrent.size}}</a></td>
+        <td><a>{{torrent.downloaded}}</a></td>
+        <td><a>{{torrent.temp_taken_download}}</a></td>
+        <td><a>{{torrent.uploaded}}</a></td>
+        <td><a>{{torrent.temp_taken_upload}}</a></td>
+        <td><a>{{"%.02f" % (torrent.uploaded / (torrent.downloaded + 1))}}</a></td>
+        <td><a>{{torrent.seeders}}</a></td>
+        <td><a>{{torrent.leechers}}</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="bottom_nav">
+    <a>Add Torrent</a>
+    <a>Add Client</a>
+    <a>Clients</a>
+    <a>Settings</a>
+
+    <a>Total Active:</a>
+    <a>Total Downloaded: </a>
+    <a>Total Uploaded: </a>
+    <a>Download Speed: </a>
+    <a>Upload Speed: </a>
+    <a>Ratio: </a>
+</div>
+</body>
+</html>

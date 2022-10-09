@@ -9,7 +9,7 @@ def random_id() -> int:
 
 
 # using dataclasses as its easier to save and retrieve info
-@dataclass
+@dataclass(unsafe_hash=True)
 class Client:
     rand_id: str  # Random ID constructed from 12 random chars
     client_name: str  # How client will be represented to the user
@@ -21,8 +21,12 @@ class Client:
     available_download: int  # How much upload bandwidth is available in Bytes
     peer_id: str  # A peer ID which is originated in the ORIGINAL torrent client. example for one: -AZ3020-
 
+    total_downloaded: int
+    total_uploaded: int
+
+
 def create_from_user_input(rand_id, client_name, user_agent, port, upload_limit, download_limit, peer_id) -> Client:
     available_upload = upload_limit
     available_download = download_limit
     return Client(rand_id, client_name, user_agent, port, upload_limit, download_limit, available_upload,
-                  available_download, peer_id)
+                  available_download, peer_id, 0, 0)

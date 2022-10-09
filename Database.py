@@ -43,6 +43,8 @@ class Database:
 
     def update_torrents(self, torrents):
         self.torrentConn.update("info_hash", *torrents)
+    def update_clients(self, clients):
+        self.clientConn.update("client_name", *clients)
 
     def add_torrent(self, torrent):
         self.torrentConn.insert(torrent)

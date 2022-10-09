@@ -3,6 +3,7 @@ Where we will control all announces.
 """
 import asyncio
 import sqlite3
+import time
 import urllib.parse
 import httpx
 from Client import Client
@@ -16,6 +17,7 @@ import bencoding
 
 # an announcement function
 async def announce(httpx_client: httpx.AsyncClient, TYPE: str, torrent: Torrent, client: Client):
+    print(torrent.name)
     # if it's not a regular announcement in a speficied interval, than we need to declare it. so we use a dictionary which lets us declare the event type
     event = {"start": "started",
              "end": "completed",
@@ -50,7 +52,8 @@ async def announce(httpx_client: httpx.AsyncClient, TYPE: str, torrent: Torrent,
     try:
         req = await httpx_client.get(URL, headers=HTTP_HEADERS)
 
-    except:
+    except Exception as e:
+        print(e)
         return
     info = bencoding.decode(req.content)
 
@@ -85,57 +88,59 @@ def create_connection(db_file):
 
 
 async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_instance: Database):
-    async with httpx.AsyncClient() as httpx_client:
-        while True:
-            tasks = []
-            # we will use a set to avoid duplicates
-            torrents_to_update = set()
-            # first we will take care of announcements.
-            for torrent in torrent_list:
-                client = client_list[torrent.client_id]
-                if not torrent.is_start_announced:
-                    tasks.append(announce(httpx_client, "start", torrent, client))
-                    torrents_to_update.add(torrent)
-                # smaller than zero because fresh torrents wont be announced that way
-                if torrent.time_to_announce < 0:
-                    tasks.append(announce(httpx_client, "resume", torrent, client))
-                    torrents_to_update.add(torrent)
+    httpx_client = httpx.AsyncClient()
+    while True:
+        tasks = []
+        # we will use a set to avoid duplicates
+        torrents_to_update = set()
+        clients_to_update = set()
+        # first we will take care of announcements.
+        for torrent in torrent_list:
+            client = client_list[torrent.client_id]
+            if not torrent.is_start_announced:
+                tasks.append(announce(httpx_client, "start", torrent, client))
+                torrents_to_update.add(torrent)
+            # smaller than zero because fresh torrents wont be announced that way
+            if torrent.time_to_announce < 0:
+                tasks.append(announce(httpx_client, "resume", torrent, client))
+                torrents_to_update.add(torrent)
 
-                if torrent.progress() == 100 and not torrent.is_finish_announced:
-                    tasks.append(announce(httpx_client, "end", torrent, client))
-                    torrents_to_update.add(torrent)
+            if torrent.progress() == 100 and not torrent.is_finish_announced:
+                tasks.append(announce(httpx_client, "end", torrent, client))
+                torrents_to_update.add(torrent)
 
-                # every five seconds we will update the db
-                if torrent.time_to_announce % 5 == 0:
-                    torrents_to_update.add(torrent)
+            # every five seconds we will update the db
+            if torrent.time_to_announce % 5 == 0:
+                torrents_to_update.add(torrent)
+                clients_to_update.add(client)
+        if tasks:
+            print("Total announcements need to be made:", len(tasks))
 
-            if tasks:
-                print("Total announcements need to be made:", len(tasks))
+        await asyncio.gather(*tasks)
+        if torrents_to_update:
+            db_instance.update_torrents(torrents_to_update)
+        if clients_to_update:
+            db_instance.update_clients(clients_to_update)
 
-            await asyncio.gather(*tasks)
-            if torrents_to_update:
-                db_instance.update_torrents(torrents_to_update)
-                print("total torrents updated:", len(torrents_to_update))
+        for torrent in torrent_list:
+            client = client_list[torrent.client_id]
 
-            for torrent in torrent_list:
-                client = client_list[torrent.client_id]
+            to_download = download_data(torrent, client)
+            torrent.temp_taken_download = to_download
+            client.available_download -= to_download
+            client.total_downloaded += to_download
+            torrent.downloaded += to_download
 
-                to_download = download_data(torrent, client)
-                torrent.temp_taken_download = to_download
-                client.available_download -= to_download
-                torrent.downloaded += to_download
+            to_upload = upload_data(torrent, client)
+            torrent.temp_taken_upload = to_upload
+            client.available_upload -= to_upload
+            client.total_uploaded += to_upload
+            torrent.uploaded += to_upload
 
-                to_upload = upload_data(torrent, client)
-                torrent.temp_taken_upload = to_upload
-                client.available_upload -= to_upload
-                torrent.uploaded += to_upload
+        for torrent in torrent_list:
+            # we will update the client speed but we wont take it away from torrent because we need it to print speed in website
+            client.available_upload += torrent.temp_taken_upload
+            client.available_download += torrent.temp_taken_download
+            torrent.time_to_announce -= 1
 
-            for torrent in torrent_list:
-                client.available_upload += torrent.temp_taken_upload
-                torrent.temp_taken_upload = 0
-                client.available_download += torrent.temp_taken_download
-                torrent.temp_taken_download = 0
-
-                torrent.time_to_announce -= 1
-
-            await asyncio.sleep(1)
+        time.sleep(1)
