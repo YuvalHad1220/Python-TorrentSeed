@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Torrents</title>
+</head>
+<body>
+<form action="{{url_for('add_torrents')}}" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" multiple accept=".torrent"></br>
+    <label for="client">Select client:</label></br>
+    <select name="client" id="client">
+        {% for client in client_list: %}
+        <option value="{{client.client_name}}">{{client.client_name}}</option>
+        {% endfor %}
+    </select></br>
+
+    <label for="state">Is torrent only for seeding?</label></br>
+    <select name="state" id="state">
+        <option value="False">False</option>
+        <option value="True">True</option>
+    </select></br>
+
+    <label for="torrents_download_speed">Max Download speed:</label></br>
+    <input type="number" id="torrents_download_speed" name="torrents_download_speed" value="600"><select name="download_type" id="download_type"><option value="b">B</option><option value="kb" selected>KB</option><option value="mb">MB</option></select></br>
+    <label for="torrents_upload_speed">Max Upload speed:</label></br>
+    <input type="number" id="torrents_upload_speed" name="torrents_upload_speed" value="20"><select name="upload_type" id="upload_type"><option value="b">B</option><option value="kb">KB</option><option value="mb">MB</option></select></br>
+
+    <input type="submit" value="submit">
+</form>
+</body>
+</html>

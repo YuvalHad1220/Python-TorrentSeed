@@ -60,12 +60,12 @@ table {
     <tr id="torrent_row">
         <td><a>{{torrent.name}}</a></td>
         <td><a>{{client_list[torrent.client_id].client_name}}</a></td>
-        <td><a>{{"%.2f" % (100 * (torrent.downloaded+1) / torrent.size)}}</a></td>
-        <td><a>{{torrent.size}}</a></td>
-        <td><a>{{torrent.downloaded}}</a></td>
-        <td><a>{{torrent.temp_taken_download}}</a></td>
-        <td><a>{{torrent.uploaded}}</a></td>
-        <td><a>{{torrent.temp_taken_upload}}</a></td>
+        <td><a>{{"%.2f" % (100 * (torrent.downloaded+1) / torrent.size)}} %</a></td>
+        <td><a>{{pretty_size(torrent.size)}}</a></td>
+        <td><a>{{pretty_size(torrent.downloaded)}}</a></td>
+        <td><a>{{pretty_size(torrent.temp_taken_download)}}/s</a></td>
+        <td><a>{{pretty_size(torrent.uploaded)}}</a></td>
+        <td><a>{{pretty_size(torrent.temp_taken_upload)}}/s</a></td>
         <td><a>{{"%.02f" % (torrent.uploaded / (torrent.downloaded + 1))}}</a></td>
         <td><a>{{torrent.seeders}}</a></td>
         <td><a>{{torrent.leechers}}</a></td>
@@ -74,9 +74,9 @@ table {
 </table>
 
 <div class="bottom_nav">
-    <a>Add Torrent</a>
-    <a>Add Client</a>
-    <a>Clients</a>
+    <a href="{{url_for('add_torrents')}}">Add Torrent</a>
+    <a href="{{url_for('create_client')}}">Add Client</a>
+    <a href="{{url_for('display_client_data')}}">Clients</a>
     <a>Settings</a>
 
     <a>Total Active:</a>

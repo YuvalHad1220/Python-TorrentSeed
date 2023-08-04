@@ -1,0 +1,4 @@
+db_backup/*
+success_torrents/*
+torrents/*
+torrents_and_clients.db

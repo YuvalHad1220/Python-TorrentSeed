@@ -2,8 +2,22 @@ import hashlib
 from datetime import datetime
 import bencoding
 
-def parse(filepath: str) -> dict:
-    torrentFileTemp = File(filepath)
+def parse_from_filename(filepath: str) -> dict:
+    f = open(filepath, "rb")
+    file_read = f.read()
+    f.close()
+    torrentFileTemp = File(file_read)
+    toReturn = {'announce_url': torrentFileTemp.announce,
+                'file_hash': torrentFileTemp.file_hash,
+                'torrent_size': torrentFileTemp.total_size,
+                'torrent_name': torrentFileTemp.torrent_header[b"info"][b"name"].decode("utf-8")
+                }
+    return toReturn
+
+# this method does not close the file byitself
+def parse_from_file(binary_file: str) -> dict:
+    file_read = binary_file.read()
+    torrentFileTemp = File(file_read)
     toReturn = {'announce_url': torrentFileTemp.announce,
                 'file_hash': torrentFileTemp.file_hash,
                 'torrent_size': torrentFileTemp.total_size,
@@ -13,11 +27,8 @@ def parse(filepath: str) -> dict:
 
 
 class File:
-    def __init__(self, filepath):
-        self.filepath = filepath
-        f = open(filepath, "rb")
-        self.raw_torrent = f.read()
-        f.close()
+    def __init__(self, file_read):
+        self.raw_torrent = file_read
         self.torrent_header = bencoding.decode(self.raw_torrent)
 
         self.announce = self.torrent_header[b"announce"].decode("utf-8")

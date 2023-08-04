@@ -15,7 +15,10 @@ Also - the logic here is that the torrent's main loop JUST WHEN the database is 
 
 """
 
-from typing import List
+from typing import List, Set
+from dataclasses import asdict
+from ClientSQL import ClientSQL
+from TorrentSQL import TorrentSQL
 from dctodb import dctodb
 from Client import Client
 from Torrent import Torrent
@@ -24,35 +27,40 @@ from Torrent import Torrent
 class Database:
     def __init__(self, db_filename):
         # If the database is busy doing any data sensitive operations, we WILL NOT RUN ANY UPDATES ON THE TORRENTLIST.
-        self.clientConn = dctodb(Client, db_filename)
-        self.torrentConn = dctodb(Torrent, db_filename)
+        self.clientConn = dctodb(ClientSQL, db_filename)
+        self.torrentConn = dctodb(TorrentSQL, db_filename)
 
     def return_client_list(self) -> List[Client]:
-        return self.clientConn.fetch_all()
+        to_ret = []
+        for clientSQL_obj in self.clientConn.fetch_all():
+            to_ret.append(Client(*asdict(clientSQL_obj).values(), clientSQL_obj.upload_limit,
+                              clientSQL_obj.download_limit, 0, 0, 0, 0))
 
-    def return_torrent_list(self) -> List[Client]:
-        return self.torrentConn.fetch_all()
+        return to_ret
+
+    def return_torrent_list(self) -> List[Torrent]:
+        to_ret = []
+        for torrentSQL_obj in self.torrentConn.fetch_all():
+            to_ret.append(Torrent(*asdict(torrentSQL_obj).values(), 0, 0))
+        return to_ret
 
     def update_client(self, client):
         self.clientConn.update("rand_id", client)
 
-
     def update_torrent(self, torrent):
         self.torrentConn.update("info_hash", torrent)
 
-
     def update_torrents(self, torrents):
         self.torrentConn.update("info_hash", *torrents)
+
     def update_clients(self, clients):
         self.clientConn.update("client_name", *clients)
 
     def add_torrent(self, torrent):
         self.torrentConn.insert(torrent)
 
-
     def add_torrents(self, torrents):
         self.torrentConn.insert(*torrents)
-
 
     def add_client(self, client):
         self.clientConn.insert(client)

@@ -55,10 +55,10 @@ table {
     {% for client in client_list %}
     <tr id="torrent_row">
         <td><a href="{{url_for('edit_client', client_name=client.client_name)}}">{{client.client_name}}</a></td>
-        <td><a>{{client.download_limit - client.available_download}}</a></td>
-        <td><a>{{client.total_downloaded}}</a></td>
-        <td><a>{{client.upload_limit - client.available_upload}}</a></td>
-        <td><a>{{client.total_uploaded}}</a></td>
+        <td><a>{{pretty_size(client.download_speed)}}</a></td>
+        <td><a>{{pretty_size(client.total_downloaded)}}</a></td>
+        <td><a>{{pretty_size(client.upload_speed)}}</a></td>
+        <td><a>{{pretty_size(client.total_uploaded)}}</a></td>
         <td><a>{{"%.2f" % (client.total_uploaded / (client.total_downloaded + 1))}}</a></td>
     </tr>
     {% endfor %}

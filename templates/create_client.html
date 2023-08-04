@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create client</title>
+</head>
+<body>
+<form action="{{url_for('create_client')}}" method="post">
+    <label for="client_name">Client Name:</label></br>
+    <input type="text" id="client_name" name="client_name"></br>
+    <label for="client_type">Client Type:</label></br>
+    <select name="client_type" id="client_type">
+        {% for client in client_data_names %}
+        <option value="{{client}}">{{client}}</option>
+        {% endfor %}
+    </select></br>
+    <label for="client_download_limit">Download Limit:</label></br>
+    <input type="number" id="client_download_limit" name="client_download_limit" value="15"><select name="download_type" id="download_type"><option value="b">B</option><option value="kb">KB</option><option value="mb" selected>MB</option></select></br>
+    <label for="client_upload_limit">Upload Limit:</label></br>
+    <input type="number" id="client_upload_limit" name="client_upload_limit" value="100"><select name="upload_type" id="upload_type"><option value="b">B</option><option value="kb" selected>KB</option><option value="mb">MB</option></select></br>
+
+    <label for="client_port">Client Port:</label></br>
+    <input type="number" id="client_port" name="client_port" value="25565"></br>
+    <label for="random_id">Random ID: (Dont touch if dont understand)</label></br>
+    <input type="text" id="random_id" name="random_id" value="{{rand_id}}"></br>
+
+    <input type="submit" value="Submit">
+
+</form>
+</body>
+</html>

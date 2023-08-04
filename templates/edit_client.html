@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Client</title>
+</head>
+<body>
+
+<form action="{{url_for('edit_client_post')}}" method="post">
+    <label for="client_name">Client Name:</label></br>
+    <input type="text" id="client_name" name="client_name" value="{{client.client_name}}" readonly="readonly"></br>
+    <label for="client_download_limit">Download Limit:</label></br>
+    <input type="number" id="client_download_limit" name="client_download_limit" value="{{client.download_limit}}"><select name="download_type" id="download_type"><option value="b">B</option><option value="kb">KB</option><option value="mb">MB</option></select></br>
+    <label for="client_upload_limit">Upload Limit:</label></br>
+    <input type="number" id="client_upload_limit" name="client_upload_limit" value="{{client.upload_limit}}"><select name="upload_type" id="upload_type"><option value="b">B</option><option value="kb">KB</option><option value="mb">MB</option></select></br>
+    <input type="submit" value="Submit">
+
+</form>
+
+</body>
+</html>

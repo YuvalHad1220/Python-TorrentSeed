@@ -9,6 +9,13 @@ def _create_connection(db_filename):
 
 
 class dctodb:
+    @classmethod
+    def remove_col_from_table(cls, db_filename: str, dc: Type[Any], field_to_remove: str):
+        command = f"ALTER TABLE {dc.__name__} DROP COLUMN {field_to_remove}"
+        conn = _create_connection(db_filename)
+        cur = conn.cursor()
+        cur.execute(command)
+        conn.close()
     def __init__(self, dc: Type[Any], db_filename: str):
         self.dc: Type[Any] = dc
         self.db_filename: str = db_filename
@@ -42,12 +49,12 @@ class dctodb:
         conn.close()
 
     def insert(self, *instances_of_dc):
-        var_names = [field.name for field in fields(instances_of_dc[0])]
+        var_names = [field.name for field in fields(self.dc)]
         command = f"INSERT INTO {self.dc.__name__} ({','.join(var_names)}) VALUES ({'?,' * len(var_names)}"
         command = command[:-1]  # strip ','
         command += ")"
 
-        val_list = [tuple(asdict(instance).values()) for instance in instances_of_dc]
+        val_list = [tuple(getattr(instance, var_name) for var_name in var_names) for instance in instances_of_dc]
 
         conn = _create_connection(self.db_filename)
         cur = conn.cursor()
@@ -75,7 +82,7 @@ class dctodb:
         return fetched
 
     def update(self, find_by_field, *instances_of_dc):
-        var_names = [field.name for field in fields(instances_of_dc[0])]
+        var_names = [field.name for field in fields(self.dc)]
         command = f"UPDATE {self.dc.__name__} SET {''.join(f'{name} = ?,' for name in var_names)}"
         command = command[:-1]  # remove ','
 
@@ -84,7 +91,7 @@ class dctodb:
         # arg_list contains a tuple of values of all objects data to update COMBINED with the key
         arg_list = []
         for instance in instances_of_dc:
-            vals = tuple(getattr(instance, field.name) for field in fields(instance))
+            vals = tuple(getattr(instance, field.name) for field in fields(self.dc))
             find_by = (getattr(instance, find_by_field),)
 
             arg_list.append(vals + find_by)
@@ -96,12 +103,12 @@ class dctodb:
         conn.close()
 
     def delete(self, *instances_of_dc):
-        var_names = [field.name for field in fields(instances_of_dc[0])]
+        var_names = [field.name for field in fields(self.dc)]
         command = f"DELETE FROM {self.dc.__name__} WHERE {''.join(f'{name} = ? AND ' for name in var_names)}"
         command = command[:-4]  # remove '? AND' from query
 
         # a list of the tuples containing the value of all objects we want to remove
-        val_list = [tuple(asdict(instance).values()) for instance in instances_of_dc]
+        val_list = [tuple(getattr(instance, var_name) for var_name in var_names) for instance in instances_of_dc]
         conn = _create_connection(self.db_filename)
         c = conn.cursor()
         c.executemany(command, val_list)

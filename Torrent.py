@@ -1,29 +1,11 @@
 from dataclasses import dataclass
 
+from TorrentSQL import TorrentSQL
+
 
 # using dataclasses as its easier to save and retrieve info
-@dataclass(unsafe_hash=True)
-class Torrent:
-    name: str
-    size: int
-    seeders: int  # amount of seeders
-    leechers: int  # amount of leechers
-
-    download_speed: int  # MAXIMUM download speed in Bytes
-    upload_speed: int  # MAXIMUM upload speed in Bytes
-    is_start_announced: bool  # if the torrent was already announced.
-    is_finish_announced: bool # if the torrent was already finished
-    announce_url: str  # Where we will announce torrent
-    info_hash: bytes  # Data of torrent to announce
-
-    time_to_announce: int  # How much seconds until we will announce the torrent
-
-    client_id: int  # the id of the client. The reason we save the id and not a reference to the object is because it
-    # is easier to both save and load, and neither the client or torrent has functions that work on each other
-
-    downloaded: int  # amount of downloaded data
-    uploaded: int  # amount of uploaded data
-
+@dataclass
+class Torrent(TorrentSQL):
     temp_taken_download: int  # Temp var to hold how much download bandwidth we took from client to the current second
     temp_taken_upload: int  # Temp var to hold how much upload bandwidth we took from client to the current second
 
@@ -32,6 +14,10 @@ class Torrent:
 
     def ratio(self) -> float:
         return self.uploaded / (self.downloaded + 1)
+
+
+    def __hash__(self):
+        return hash((self.name, self.announce_url, self.info_hash))
 def create_from_user_input(torrent_name, torrent_size, download_speed, upload_speed, announce_url, info_hash, client_id,
                            downloaded, uploaded) -> Torrent:
     # when we first add the torrent, we dont know if we can upload \ download. Therefore we will add the torrent with
