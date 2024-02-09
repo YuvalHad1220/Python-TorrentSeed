@@ -117,16 +117,14 @@ async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_i
                 # smaller than zero because fresh torrents wont be announced that way
                 if torrent.time_to_announce <= 0:
                     tasks.append(announce(session, "resume", torrent, client))
-                    torrents_to_update.add(torrent)
-
+                    if  torrent.temp_taken_download != 0 or torrent.temp_taken_upload != 0:
+                        torrents_to_update.add(torrent)
+                        clients_to_update.add(client)
                 if torrent.progress() == 100 and not torrent.is_finish_announced:
                     tasks.append(announce(session, "end", torrent, client))
                     torrents_to_update.add(torrent)
 
-                # every five seconds we will update the db
-                if  torrent.temp_taken_download != 0 or torrent.temp_taken_upload != 0:
-                    torrents_to_update.add(torrent)
-                    clients_to_update.add(client)
+
             if tasks:
                 print("Total announcements need to be made:", len(tasks))
                 exceptions = await asyncio.gather(*tasks, return_exceptions=True)
