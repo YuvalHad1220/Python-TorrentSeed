@@ -53,6 +53,7 @@ async def announce(aiohttp_client: aiohttp.ClientSession, TYPE: str, torrent: To
     HTTP_PARAMS = urllib.parse.urlencode(HTTP_PARAMS)
     HTTP_PARAMS = HTTP_PARAMS.replace("%25", "%")
     URL = torrent.announce_url + f"?{HTTP_PARAMS}"
+    print(URL)
     # try:
     async with aiohttp_client.get(URL, headers=HTTP_HEADERS,) as resp:
         content = await resp.read()
@@ -129,7 +130,7 @@ async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_i
                     torrents_to_update.add(torrent)
 
                 # every five seconds we will update the db
-                if torrent.time_to_announce % 5 == 0:
+                if torrent.time_to_announce % 30 == 0:
                     torrents_to_update.add(torrent)
                     clients_to_update.add(client)
             if tasks:
@@ -140,6 +141,7 @@ async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_i
                 print("done announcing")
 
             if torrents_to_update:
+                print("torrents to save to db:", len(torrents_to_update))
                 db_instance.update_torrents(torrents_to_update)
             if clients_to_update:
                 db_instance.update_clients(clients_to_update)

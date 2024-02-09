@@ -10,7 +10,7 @@ import parseTorrentFile
 from Database import Database
 
 app = Flask(__name__)
-db_instance = Database("db_backup/torrents_and_clients.db")
+db_instance = Database("torrents_and_clients.db")
 
 # clients to choose from
 Clients = [{"Name": "qBittorrent 4.4.5",
