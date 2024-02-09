@@ -53,16 +53,12 @@ async def announce(aiohttp_client: aiohttp.ClientSession, TYPE: str, torrent: To
     HTTP_PARAMS = urllib.parse.urlencode(HTTP_PARAMS)
     HTTP_PARAMS = HTTP_PARAMS.replace("%25", "%")
     URL = torrent.announce_url + f"?{HTTP_PARAMS}"
-    print(URL)
+
     # try:
     async with aiohttp_client.get(URL, headers=HTTP_HEADERS,) as resp:
         content = await resp.read()
         info = bencoding.decode(content)
 
-    # except Exception as e:
-    #     print(e)
-    #     torrent.time_to_announce = random.randint(1,100)
-    #     return
 
     try:
         torrent.time_to_announce = info[b"interval"]
@@ -79,11 +75,9 @@ async def announce(aiohttp_client: aiohttp.ClientSession, TYPE: str, torrent: To
         torrent.leechers = 0
 
     if TYPE == "start":
-        print("start announced")
         torrent.is_start_announced = True
 
     if TYPE == "end":
-        print("end announced")
         torrent.is_finish_announced = True
 
 
@@ -92,19 +86,19 @@ def create_connection(db_file):
 
 # a helper func that decreses time that we will never run out of sync.
 # this is a temp solutin, not a fix
-def decrease_time(torrentList):
-    while True:
-        for torrent in torrentList:
-            torrent.time_to_announce -= 1
-        time.sleep(1)
+# def decrease_time(torrentList):
+#     while True:
+#         for torrent in torrentList:
+#             torrent.time_to_announce -= 30
+#         time.sleep(30)
 async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_instance: Database):
     conn = aiohttp.TCPConnector(
         family=socket.AF_INET,
         verify_ssl=False
     )
 
-    # will decrease time without bother
-    threading.Thread(target=decrease_time, args=(torrent_list,)).start()
+    # # will decrease time without bother
+    # threading.Thread(target=decrease_time, args=(torrent_list,)).start()
 
     timeout = aiohttp.ClientTimeout(total=5)
     aiohttp_client = aiohttp.ClientSession(connector=conn, trust_env=True, timeout=timeout)
@@ -130,14 +124,15 @@ async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_i
                     torrents_to_update.add(torrent)
 
                 # every five seconds we will update the db
-                if torrent.time_to_announce % 30 == 0:
+                if  torrent.temp_taken_download != 0 or torrent.temp_taken_upload != 0:
                     torrents_to_update.add(torrent)
                     clients_to_update.add(client)
             if tasks:
                 print("Total announcements need to be made:", len(tasks))
                 exceptions = await asyncio.gather(*tasks, return_exceptions=True)
-
-                print("Total errors:" ,len([exception for exception in exceptions if exception is not None]))
+                errors = [exception for exception in exceptions if exception is not None]
+                if len(errors) > 0: 
+                    print("Total errors:" ,len([exception for exception in exceptions if exception is not None]))
                 print("done announcing")
 
             if torrents_to_update:
@@ -149,12 +144,12 @@ async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_i
             for torrent in torrent_list:
                 client = client_list[torrent.client_id]
 
-                to_download = download_data(torrent, client)
+                to_download = download_data(torrent, client) * 30
                 torrent.temp_taken_download = to_download
                 client.available_download -= to_download
                 torrent.downloaded += to_download
 
-                to_upload = upload_data(torrent, client)
+                to_upload = upload_data(torrent, client) * 30
                 torrent.temp_taken_upload = to_upload
                 client.available_upload -= to_upload
                 torrent.uploaded += to_upload
@@ -165,4 +160,7 @@ async def main_loop(torrent_list: List[Torrent], client_list: List[Client], db_i
                 client.available_upload += torrent.temp_taken_upload
                 client.available_download += torrent.temp_taken_download
 
-            time.sleep(1)
+            for torrent in torrent_list:
+                torrent.time_to_announce -= 30
+
+            time.sleep(30)
